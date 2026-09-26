@@ -35,6 +35,11 @@
   async function submit(event){
     event.preventDefault();if(pending)return;
     const data=values();if(!validate(data))return;
+    if(!window.ShinobiAuthService||!window.firebaseAuth){
+      el('auth-error').textContent='Firebase is still loading. Please wait a moment and try again.';
+      el('auth-error').hidden=false;
+      return;
+    }
     pending=true;
     el('auth-error').hidden=true;
     const button=el('auth-form').querySelector('[type="submit"]');button.disabled=true;button.textContent=mode==='register'?'Preparing your shinobi…':'Entering the village…';
@@ -77,6 +82,11 @@
     if(button.dataset.toggle){const input=el(button.dataset.toggle),show=input.type==='password';input.type=show?'text':'password';button.textContent=show?'Hide':'Show';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',(show?'Hide ':'Show ')+(input.id==='confirmPassword'?'confirm password':'password'));return;}
     if(button.id==='google-signin'){
       if(pending)return;
+      if(!window.ShinobiAuthService||!window.ShinobiAuthService.signInWithGoogle){
+        el('auth-error').textContent='Firebase is still loading. Please wait a moment and try again.';
+        el('auth-error').hidden=false;
+        return;
+      }
       pending=true;
       el('auth-error').hidden=true;
       button.disabled=true;
