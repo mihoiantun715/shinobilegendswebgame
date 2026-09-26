@@ -1,9 +1,4 @@
-// Firebase configuration - uses environment variables in production
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js';
-
+// Firebase configuration - initialized after scripts load
 const firebaseConfig = {
   apiKey: "AIzaSyAiWy4M5VhaR2Zh6SKZaXYruOySw0p26pA",
   authDomain: "shinobilegendswebgame.firebaseapp.com",
@@ -14,11 +9,24 @@ const firebaseConfig = {
   measurementId: "G-070456R9VR"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const analytics = getAnalytics(app);
-const googleProvider = new GoogleAuthProvider();
-
-export { app, auth, db, analytics, googleProvider };
+// Wait for Firebase SDK to load, then initialize
+window.initializeFirebase = function() {
+  if (!firebase) {
+    console.error('Firebase SDK not loaded');
+    return;
+  }
+  
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const googleProvider = new firebase.auth.GoogleAuthProvider();
+  
+  // Make available globally
+  window.firebaseApp = app;
+  window.firebaseAuth = auth;
+  window.firebaseDb = db;
+  window.googleProvider = googleProvider;
+  
+  console.log('Firebase initialized successfully');
+};

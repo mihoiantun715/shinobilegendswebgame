@@ -1,20 +1,5 @@
 // Firebase Authentication Service - replaces demo auth
-import { auth, db, googleProvider } from './firebase-config.js';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  updateProfile,
-  onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc,
-  serverTimestamp 
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+// Uses Firebase compat SDK loaded via CDN
 
 // Real Firebase authentication service
 window.ShinobiAuthService = {
@@ -28,16 +13,16 @@ window.ShinobiAuthService = {
         throw new Error('Please use your email address to sign in.');
       }
       
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
       
       // Get user profile from Firestore
-      const userDoc = await getDoc(doc(db, 'players', user.uid));
-      const displayName = userDoc.exists() ? userDoc.data().displayName : user.displayName || user.email.split('@')[0];
+      const userDoc = await window.firebaseDb.collection('players').doc(user.uid).get();
+      const displayName = userDoc.exists ? userDoc.data().displayName : user.displayName || user.email.split('@')[0];
       
       // Update last login
-      await updateDoc(doc(db, 'players', user.uid), {
-        lastLogin: serverTimestamp()
+      await window.firebaseDb.collection('players').doc(user.uid).update({
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
       });
       
       return { displayName, uid: user.uid };
@@ -55,18 +40,18 @@ window.ShinobiAuthService = {
   async register({displayName, email, password}) {
     try {
       // Create Firebase user
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       
       // Update Firebase Auth profile
-      await updateProfile(user, { displayName: displayName.trim() });
+      await user.updateProfile({ displayName: displayName.trim() });
       
       // Create player document in Firestore
-      await setDoc(doc(db, 'players', user.uid), {
+      await window.firebaseDb.collection('players').doc(user.uid).set({
         displayName: displayName.trim(),
         email: email,
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
         level: 1,
         element: 'Storm'
       });
@@ -87,26 +72,26 @@ window.ShinobiAuthService = {
   
   async signInWithGoogle() {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await window.firebaseAuth.signInWithPopup(window.googleProvider);
       const user = result.user;
       
       // Check if player document exists
-      const userDoc = await getDoc(doc(db, 'players', user.uid));
+      const userDoc = await window.firebaseDb.collection('players').doc(user.uid).get();
       
-      if (!userDoc.exists()) {
+      if (!userDoc.exists) {
         // Create new player document for Google sign-in
-        await setDoc(doc(db, 'players', user.uid), {
+        await window.firebaseDb.collection('players').doc(user.uid).set({
           displayName: user.displayName || user.email.split('@')[0],
           email: user.email,
-          createdAt: serverTimestamp(),
-          lastLogin: serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
           level: 1,
           element: 'Storm'
         });
       } else {
         // Update last login
-        await updateDoc(doc(db, 'players', user.uid), {
-          lastLogin: serverTimestamp()
+        await window.firebaseDb.collection('players').doc(user.uid).update({
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
       
@@ -122,7 +107,7 @@ window.ShinobiAuthService = {
   
   async signOut() {
     try {
-      await firebaseSignOut(auth);
+      await window.firebaseAuth.signOut();
     } catch (error) {
       console.error('Sign out error:', error);
       throw new Error('Sign out failed.');
@@ -131,11 +116,11 @@ window.ShinobiAuthService = {
   
   // Listen for auth state changes
   onAuthStateChanged(callback) {
-    return onAuthStateChanged(auth, callback);
+    return window.firebaseAuth.onAuthStateChanged(callback);
   },
   
   // Get current user
   getCurrentUser() {
-    return auth.currentUser;
+    return window.firebaseAuth.currentUser;
   }
 };

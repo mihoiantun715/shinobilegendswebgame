@@ -1,12 +1,5 @@
 // Firestore service for player data persistence
-import { db } from './firebase-config.js';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc,
-  serverTimestamp 
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+// Uses Firebase compat SDK loaded via CDN
 
 const SAVE_KEY = 'veilstorm-save-v1';
 
@@ -16,17 +9,17 @@ window.ShinobiFirestore = {
   // Load player data from Firestore
   async loadPlayerData(uid) {
     try {
-      const playerDoc = await getDoc(doc(db, 'players', uid));
-      const gameDoc = await getDoc(doc(db, 'gameData', uid));
+      const playerDoc = await window.firebaseDb.collection('players').doc(uid).get();
+      const gameDoc = await window.firebaseDb.collection('gameData').doc(uid).get();
       
-      if (!playerDoc.exists()) {
+      if (!playerDoc.exists) {
         console.warn('Player document not found');
         return null;
       }
       
       // Merge player profile with game data
       const playerData = playerDoc.data();
-      const gameData = gameDoc.exists() ? gameDoc.data() : {};
+      const gameData = gameDoc.exists ? gameDoc.data() : {};
       
       return {
         ...gameData,
@@ -47,17 +40,17 @@ window.ShinobiFirestore = {
       const { uid: _, ...dataToSave } = gameState;
       
       // Update player profile
-      await updateDoc(doc(db, 'players', uid), {
+      await window.firebaseDb.collection('players').doc(uid).update({
         displayName: gameState.name,
         element: gameState.element || 'Storm',
         level: gameState.level,
-        lastSaved: serverTimestamp()
+        lastSaved: firebase.firestore.FieldValue.serverTimestamp()
       });
       
       // Save full game state
-      await setDoc(doc(db, 'gameData', uid), {
+      await window.firebaseDb.collection('gameData').doc(uid).set({
         ...dataToSave,
-        lastSaved: serverTimestamp()
+        lastSaved: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
       
       return true;
@@ -77,8 +70,8 @@ window.ShinobiFirestore = {
       const localData = JSON.parse(localSave);
       
       // Check if Firestore already has data
-      const gameDoc = await getDoc(doc(db, 'gameData', uid));
-      if (gameDoc.exists()) {
+      const gameDoc = await window.firebaseDb.collection('gameData').doc(uid).get();
+      if (gameDoc.exists) {
         // Ask user if they want to overwrite cloud save
         const overwrite = confirm(
           'You have existing progress in the cloud. Do you want to replace it with your local progress?\n\n' +

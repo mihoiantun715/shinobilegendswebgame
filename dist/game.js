@@ -15,7 +15,7 @@ const missions=GAME_CATALOG.missions;
 function maxHealth(){return 100+(s.healthBonus||0)}
 function maxEnergy(){return 60+(s.level-1)*5+s.team.length*5+(s.spiritBonus||0)}function maxStamina(){return 20+(s.level-1)*2+(s.staminaBonus||0)}function goal(){return s.level*80}function rank(){return s.level>=7?'Warden':s.level>=5?'Sentinel':s.level>=3?'Adept':'Initiate'}
 function power(){let a=s.atk,d=s.def,ia=0,id=0,ta=0,td=0,ca=0,cd=0;items.forEach(x=>{if(s.items[x.id]){ia+=x.a;id+=x.d}});techniques.forEach(x=>{ta+=x.a*(s.tech[x.id]||0);td+=x.d*(s.tech[x.id]||0)});companions.forEach(x=>{if(s.team.includes(x.id)){ca+=Math.round(x.a*.3);cd+=Math.round(x.d*.3)}});return{a:a+ia+ta+ca,d:d+id+td+cd,ia,id,ta,td,ca,cd}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{toast('Browser storage unavailable. Keep this tab open.')}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s));if(s.uid&&window.ShinobiFirestore){window.ShinobiFirestore.savePlayerData(s.uid,s).catch(e=>console.error('Cloud save failed:',e))}}catch{toast('Browser storage unavailable. Keep this tab open.')}}
 function log(t){s.activity.unshift(t);s.activity=s.activity.slice(0,6)}function gain(xp,coins){s.xp+=xp;s.coins+=coins;while(s.xp>=goal()){s.xp-=goal();s.level++;s.points+=3;s.hp=maxHealth();s.energy=Math.max(s.energy,maxEnergy());s.stamina=maxStamina();log('Reached level '+s.level+' · 3 stat points earned.')}}
 function rivalState(id){s.rivalHealth??={};return s.rivalHealth[id]??=( {hp:100,last:Date.now(),kills:0,deaths:0} )}
 function regenRivals(){let changed=false;for(const r of Object.values(s.rivalHealth||{})){const n=Math.floor((Date.now()-r.last)/60000);if(n>0){r.hp=Math.min(100,r.hp+n*2);r.last+=n*60000;changed=true}}return changed}
