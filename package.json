@@ -1,0 +1,16 @@
+{
+  "name": "shinobi-legends-webgame",
+  "version": "1.0.0",
+  "description": "Shinobi Legends - Browser-based ninja RPG with Firebase backend",
+  "type": "module",
+  "scripts": {
+    "dev": "python run_game.py",
+    "start": "python run_game.py"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
